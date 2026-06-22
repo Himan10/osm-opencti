@@ -55,12 +55,36 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run unit tests
+      - name: Run unit tests with coverage
         run: |
           # libmagic is a runtime dependency of pycti (python-magic).
           sudo apt-get update && sudo apt-get install -y libmagic1
-          pip install -r requirements.txt pytest
-          pytest -q
+          pip install -r requirements.txt pytest pytest-cov
+          pytest -q \
+            --cov=src \
+            --cov-report=term-missing \
+            --cov-report=html:coverage-html \
+            --cov-report=xml:coverage.xml
+
+      - name: Publish coverage to run summary
+        if: always()
+        run: |
+          {
+            echo "## Unit test coverage"
+            echo '```'
+            # Re-render the table from the coverage data (no re-run).
+            python -m coverage report 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            coverage-html/
+            coverage.xml
 
   # 1.2 — Is the opensourcemalware endpoint UP? Non-blocking: a 3rd-party outage
   #        should never block your merges. Reports status as a warning instead.

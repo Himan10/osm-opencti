@@ -20,9 +20,19 @@ tags = ["opensourcemalware", "token"]
 [[rules]]
 id = "private-opencti-endpoint"
 description = "Non-placeholder OpenCTI endpoint leaking internal infrastructure"
-# Flags real hostnames while allowing example/placeholder ones.
-regex = '''OPENCTI_URL\s*=\s*https?://(?!(localhost|127\.0\.0\.1|your-opencti-instance\.example\.com))[A-Za-z0-9.-]+'''
+# gitleaks uses the RE2 engine, which has no lookahead. So we match ANY
+# OPENCTI_URL and let the allowlist below exclude placeholders/localhost.
+regex = '''OPENCTI_URL\s*=\s*https?://[A-Za-z0-9.-]+'''
 tags = ["endpoint", "infrastructure"]
+
+  [rules.allowlist]
+  description = "Placeholder/local endpoints are not a leak"
+  regexes = [
+    '''localhost''',
+    '''127\.0\.0\.1''',
+    '''your-opencti-instance\.example\.com''',
+    '''ChangeMe''',
+  ]
 
 [allowlist]
 description = "Placeholders and sample files are allowed"

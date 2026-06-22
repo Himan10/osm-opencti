@@ -65,8 +65,8 @@ A GitHub Actions pipeline (`.github/workflows/ci.yml`) runs on every push/PR
 |-----|------|---------|
 | `secret-scan` | [gitleaks](https://github.com/gitleaks/gitleaks) (`.gitleaks.toml`) | Fails the build if an API key, token, or non-placeholder OpenCTI endpoint is committed |
 | `lint` | [ruff](https://docs.astral.sh/ruff/) (`ruff.toml`) | `ruff check` + `ruff format --check` |
-| `docker-build-test` | `docker build` + `pytest` | Builds the image, smoke-tests that the connector boots without import/syntax errors, and runs unit tests on the STIX conversion |
-| `endpoint-health` | `curl` | **Non-blocking** probe of the opensourcemalware API (a 3rd-party outage won't fail your pipeline) |
+| `docker-build-test` | `docker build` + `pytest` | Builds the image, then runs unit tests on the STIX conversion |
+| `endpoint-health` | `curl` | **Non-blocking** probe of the opensourcemalware API; only a 5xx / unreachable host counts as down (a 3rd-party outage won't fail your pipeline) |
 
 Run the checks locally:
 

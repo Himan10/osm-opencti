@@ -1,2 +1,65 @@
-# osm-opencti
-Opencti Connector for OpenSourceMalware. To pull malicious packages using OSM API
+# OpenCTI — Open Source Malware Connector
+
+An [OpenCTI](https://www.opencti.io) `EXTERNAL_IMPORT` connector that pulls the
+latest verified malicious packages from
+[opensourcemalware.com](https://opensourcemalware.com), maps each one to a STIX
+**Malware** object, tags it with a configurable **label**, and imports it into
+OpenCTI.
+
+## What it does
+
+- Calls the free `query-latest` API for each configured ecosystem (`npm`, `pypi`, …).
+- Converts every threat record into a STIX 2.1 `Malware` SDO:
+  - **name**: `package@version (ecosystem)`
+  - **description**: threat + payload descriptions and metadata
+  - **labels**: the configured connector label (`opensourcemalware`), the
+    source's own tags, and `severity:<level>`
+  - **score**: derived from `severity_level`
+  - **external references**: the source record id plus OSV/GHSA advisory links
+    when present
+- All objects are attributed to an `Open Source Malware` organization identity.
+- Runs on a schedule (`CONNECTOR_DURATION_PERIOD`, default every 6 hours).
+
+## Configuration
+
+Configure via environment variables (see `docker-compose.yml`) **or** a
+`src/config.yml` file (copy `src/config.yml.sample`). Environment variables take
+precedence.
+
+| Parameter | Env var | Default | Description |
+|-----------|---------|---------|-------------|
+| API base URL | `OPENSOURCEMALWARE_API_BASE_URL` | `https://api.opensourcemalware.com/functions/v1` | API root |
+| API token | `OPENSOURCEMALWARE_API_TOKEN` | — | Bearer token (free API) |
+| Ecosystems | `OPENSOURCEMALWARE_ECOSYSTEMS` | `npm,pypi` | Comma-separated list to query |
+| Label | `OPENSOURCEMALWARE_LABEL` | `opensourcemalware` | Label added to every imported object |
+| Verified only | `OPENSOURCEMALWARE_VERIFIED_ONLY` | `true` | Skip non-`verified` records |
+| Run interval | `CONNECTOR_DURATION_PERIOD` | `PT6H` | ISO-8601 duration between runs |
+
+Plus the standard `OPENCTI_URL`, `OPENCTI_TOKEN`, `CONNECTOR_ID` (a fresh UUIDv4).
+
+## Run
+
+### Docker
+
+```bash
+export OPENCTI_TOKEN=...           # your OpenCTI admin/connector token
+export CONNECTOR_ID=$(uuidgen)
+export OPENSOURCEMALWARE_API_TOKEN=$(cat .api-token)
+docker compose up -d --build
+```
+
+### Locally
+
+```bash
+pip install -r requirements.txt
+cp src/config.yml.sample src/config.yml   # then fill in values
+python src/connector.py
+```
+
+## Notes
+
+- The free `query-latest` endpoint returns up to the 100 most recent threats per
+  ecosystem; the connector re-fetches on each run. OpenCTI deduplicates by the
+  deterministic STIX id, so repeated runs upsert rather than duplicate.
+- The label is created automatically in OpenCTI on first ingest if it doesn't
+  already exist.

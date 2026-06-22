@@ -1,0 +1,19 @@
+opencti:
+  url: 'http://localhost:8080'
+  token: 'ChangeMe'
+
+connector:
+  id: 'ChangeMe'
+  type: 'EXTERNAL_IMPORT'
+  name: 'Open Source Malware'
+  scope: 'malware'
+  log_level: 'info'
+  duration_period: 'PT6H'
+
+opensourcemalware:
+  api_base_url: 'https://api.opensourcemalware.com/functions/v1'
+  api_token: 'ChangeMe'
+  ecosystems: 'npm,pypi'
+  label: 'opensourcemalware'
+  # Optional: only import threats with status == verified (recommended)
+  verified_only: true
